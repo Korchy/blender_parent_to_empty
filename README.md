@@ -1,2 +1,1 @@
-# blender_parent_to_empty
-Parent to Empty
+# Parent to Empty
