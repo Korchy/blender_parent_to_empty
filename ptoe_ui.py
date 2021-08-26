@@ -16,7 +16,12 @@ class PTOE_PT_panel(Panel):
     bl_category = 'PtoE'
 
     def draw(self, context):
-        self.layout.operator('ptoe.parent_to_empty', icon='BLENDER')
+        layout = self.layout
+        pref = context.preferences.addons[__package__].preferences
+        layout.prop(data=pref, property='empty_display_type', text='')
+        layout.prop(data=pref, property='parenting_scatter', expand=True)
+        layout.prop(data=pref, property='empty_default_name')
+        layout.operator('ptoe.parent_to_empty', icon='BLENDER')
 
 
 def register():
