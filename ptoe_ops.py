@@ -26,7 +26,8 @@ class PTOE_OT_parent_to_empty(Operator):
             single=True if pref_vars.parenting_scatter == 'SINGLE' else False,
             copy_transforms=pref_vars.copy_transforms,
             empty_display_type=pref_vars.empty_display_type,
-            empty_name=pref_vars.empty_default_name
+            empty_name=pref_vars.empty_default_name,
+            empty_location=pref_vars.empty_location
         )
         return {'FINISHED'}
 

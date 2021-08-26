@@ -8,7 +8,7 @@ class PtoE:
 
     @classmethod
     def parent_to_empty(cls, context, objects, single=False, copy_transforms=True, empty_display_type='PLAIN_AXES',
-                        empty_name='empty'):
+                        empty_name='empty', empty_location='CENTER'):
         # set parent to empty
         single_empty = None
         if single:
@@ -45,3 +45,12 @@ class PtoE:
             object=empty
         )
         return empty
+
+    @staticmethod
+    def location_co(context, location):
+        # get coordinates by location
+        co = (0.0, 0.0, 0.0)    # WORLD_ORIGIN
+        if location == 'CENTER':
+            # Center of selected objects origins
+            co = ()
+        return co

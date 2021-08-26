@@ -24,6 +24,18 @@ class PTOE_preferences(AddonPreferences):
         default='PLAIN_AXES'
     )
 
+    empty_location: EnumProperty(
+        name='Empty Location',
+        items=[
+            ('CENTER', 'Center', 'Center', '', 0),
+            ('ACTIVE', 'Active', 'Active', '', 1),
+            ('CURSOR', 'Cursor', 'Cursor', '', 2),
+            ('WORLD_ORIGIN', 'World Origin', 'World Origin', '', 3),
+            ('GEOMETRY', 'Geometry', 'Geometry', '', 4)
+        ],
+        default='CENTER'
+    )
+
     empty_default_name: StringProperty(
         name='Empty Name',
         default='Empty'
@@ -40,8 +52,10 @@ class PTOE_preferences(AddonPreferences):
 
     def draw(self, context):
         layout = self.layout
-        layout.prop(data=self, property='copy_transforms')
+        row = layout.row()
+        row.prop(data=self, property='empty_location', expand=True)
         layout.prop(data=self, property='empty_display_type')
+        layout.prop(data=self, property='copy_transforms')
         row = layout.row()
         row.prop(data=self, property='parenting_scatter', expand=True)
         layout.prop(data=self, property='empty_default_name')
