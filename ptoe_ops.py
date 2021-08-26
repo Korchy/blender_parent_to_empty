@@ -24,7 +24,7 @@ class PTOE_OT_parent_to_empty(Operator):
             context=context,
             objects=context.selected_objects,
             single=True if pref_vars.parenting_scatter == 'SINGLE' else False,
-            copy_transforms=pref_vars.copy_transforms,
+            transfer_transforms=pref_vars.transfer_transforms,
             empty_display_type=pref_vars.empty_display_type,
             empty_name=pref_vars.empty_default_name,
             empty_location=pref_vars.empty_location
@@ -36,9 +36,29 @@ class PTOE_OT_parent_to_empty(Operator):
         return bool(context.selected_objects)
 
 
+class PTOE_OT_remove_parent_empty(Operator):
+    bl_idname = 'ptoe.remove_parent_empty'
+    bl_label = 'Remove Parent Empty'
+    bl_description = 'Remove Parent Empty'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        PtoE.remove_parent_empty(
+            context=context,
+            objects=context.selected_objects
+        )
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        return bool(context.selected_objects)
+
+
 def register():
     register_class(PTOE_OT_parent_to_empty)
+    register_class(PTOE_OT_remove_parent_empty)
 
 
 def unregister():
+    unregister_class(PTOE_OT_remove_parent_empty)
     unregister_class(PTOE_OT_parent_to_empty)

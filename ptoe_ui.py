@@ -18,12 +18,21 @@ class PTOE_PT_panel(Panel):
     def draw(self, context):
         layout = self.layout
         pref = context.preferences.addons[__package__].preferences
-        layout.prop(data=pref, property='empty_location', expand=True)
-        layout.prop(data=pref, property='empty_display_type', text='')
-        layout.prop(data=pref, property='parenting_scatter', expand=True)
-        # layout.prop(data=pref, property='parenting_scatter', expand=True)
-        layout.prop(data=pref, property='empty_default_name')
-        layout.operator('ptoe.parent_to_empty', icon='DECORATE_LINKED')     # DECORATE_LIBRARY_OVERRIDE
+        box = layout.box()
+        box.label(text='Add Parent Empty')
+        box.prop(data=pref, property='empty_display_type', text='')
+        row = box.row()
+        row.prop(data=pref, property='parenting_scatter', expand=True)
+        if pref.parenting_scatter == 'EACH':
+            box.prop(data=pref, property='transfer_transforms')
+        if pref.parenting_scatter != 'EACH' or not pref.transfer_transforms:
+            row = box.row()
+            row.prop(data=pref, property='empty_location', expand=True)
+        box.prop(data=pref, property='empty_default_name')
+        box.operator('ptoe.parent_to_empty', icon='DECORATE_LINKED')
+        box = layout.box()
+        box.label(text='Remove Parent Empty')
+        box.operator('ptoe.remove_parent_empty', icon='DECORATE_LIBRARY_OVERRIDE')
 
 
 def register():

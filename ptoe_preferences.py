@@ -12,8 +12,8 @@ from bpy.utils import register_class, unregister_class
 class PTOE_preferences(AddonPreferences):
     bl_idname = __package__
 
-    copy_transforms: BoolProperty(
-        name='Copy Transforms',
+    transfer_transforms: BoolProperty(
+        name='Transfer Transforms to Empty',
         default=True
     )
 
@@ -30,8 +30,7 @@ class PTOE_preferences(AddonPreferences):
             ('CENTER', 'Center', 'Center', '', 0),
             ('ACTIVE', 'Active', 'Active', '', 1),
             ('CURSOR', 'Cursor', 'Cursor', '', 2),
-            ('WORLD_ORIGIN', 'World Origin', 'World Origin', '', 3),
-            ('GEOMETRY', 'Geometry', 'Geometry', '', 4)
+            ('WORLD_ORIGIN', 'World Origin', 'World Origin', '', 3)
         ],
         default='CENTER'
     )
@@ -44,20 +43,22 @@ class PTOE_preferences(AddonPreferences):
     parenting_scatter: EnumProperty(
         name='Scatter',
         items=[
-            ('SINGLE', 'Single', 'Single', '', 0),
-            ('EACH', 'Each', 'Each', '', 1)
+            ('SINGLE', 'Single Empty', 'Single Empty to all objects', '', 0),
+            ('EACH', 'Own Empty', 'Own Empty to Each object', '', 1)
         ],
         default='SINGLE'
     )
 
     def draw(self, context):
         layout = self.layout
-        row = layout.row()
-        row.prop(data=self, property='empty_location', expand=True)
         layout.prop(data=self, property='empty_display_type')
-        layout.prop(data=self, property='copy_transforms')
         row = layout.row()
         row.prop(data=self, property='parenting_scatter', expand=True)
+        if self.parenting_scatter == 'EACH':
+            layout.prop(data=self, property='transfer_transforms')
+        if self.parenting_scatter != 'EACH' or not self.transfer_transforms:
+            row = layout.row()
+            row.prop(data=self, property='empty_location', expand=True)
         layout.prop(data=self, property='empty_default_name')
 
 
