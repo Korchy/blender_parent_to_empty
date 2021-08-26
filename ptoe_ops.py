@@ -54,11 +54,54 @@ class PTOE_OT_remove_parent_empty(Operator):
         return bool(context.selected_objects)
 
 
+class PTOE_OT_collection_to_parent_empty(Operator):
+    bl_idname = 'ptoe.collection_to_parent_empty'
+    bl_label = 'Collection to Patent Empty'
+    bl_description = 'Convert active collection to Parent Empty'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        pref_vars = context.preferences.addons[__package__].preferences
+        PtoE.collection_to_parent_empty(
+            context=context,
+            collection=context.view_layer.active_layer_collection,
+            empty_display_type=pref_vars.empty_display_type,
+            empty_name=pref_vars.empty_default_name,
+            empty_location=pref_vars.empty_location
+        )
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        return bool(context.view_layer.active_layer_collection)
+
+
+class PTOE_OT_parent_empty_to_collection(Operator):
+    bl_idname = 'ptoe.parent_empty_to_collection'
+    bl_label = 'Patent Empty to Collection'
+    bl_description = 'Convert Parent Empty to Collection'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        PtoE.parent_empty_to_collection(
+            collection=context.view_layer.active_layer_collection
+        )
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        return bool(context.view_layer.active_layer_collection)
+
+
 def register():
     register_class(PTOE_OT_parent_to_empty)
     register_class(PTOE_OT_remove_parent_empty)
+    register_class(PTOE_OT_collection_to_parent_empty)
+    register_class(PTOE_OT_parent_empty_to_collection)
 
 
 def unregister():
+    unregister_class(PTOE_OT_parent_empty_to_collection)
+    unregister_class(PTOE_OT_collection_to_parent_empty)
     unregister_class(PTOE_OT_remove_parent_empty)
     unregister_class(PTOE_OT_parent_to_empty)

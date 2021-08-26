@@ -11,7 +11,7 @@ class PtoE:
 
     @classmethod
     def parent_to_empty(cls, context, objects, single=False, transfer_transforms=True, empty_display_type='PLAIN_AXES',
-                        empty_name='empty', empty_location='CENTER'):
+                        empty_name='Empty', empty_location='CENTER'):
         # set parent to empty
         single_empty = None
         if single:
@@ -21,7 +21,7 @@ class PtoE:
                 display_type=empty_display_type,
                 location=cls.location_co(
                     context=context,
-                    obj=context.selected_objects,
+                    obj=objects,
                     location=empty_location
                 ),
                 name=empty_name
@@ -35,9 +35,14 @@ class PtoE:
                     obj=obj,
                     location=empty_location
                 ),
-                name=empty_name
+                name=empty_name,
+                collection=obj.users_collection[0]
             )
             if empty:
+                cls.remove_parent_empty(
+                    context=context,
+                    objects=obj
+                )
                 context.view_layer.update()
                 if not single and transfer_transforms:
                     # copy transforms to empty and clear to object
@@ -51,21 +56,40 @@ class PtoE:
                     obj.matrix_local @= empty.matrix_world.inverted()
 
     @classmethod
-    def remove_parent_empty(cls, context, objects: list):
+    def remove_parent_empty(cls, context, objects):
         # remove parent empty
-        # collect empties to remove (maybe single empty or different empties on every objects)
+        if not isinstance(objects, (list, tuple)):
+            objects = [objects,]
+        # collect empties to future remove (maybe single empty or different empties on every objects)
         empties = []
-        # clear parenting and collect parent empties
+        # clear parenting
         for obj in objects:
-            if obj.parent and obj.parent.type == 'EMPTY':
-                empty = obj.parent
+            # if obj.parent and obj.parent.type == 'EMPTY':
+            if obj.parent:
+                parent = obj.parent
                 obj.parent = None
-                obj.matrix_local @= empty.matrix_world.inverted()
-                if empty not in empties:
-                    empties.append(empty)
+                obj.matrix_local @= parent.matrix_world.inverted()
+                if parent.type == 'EMPTY' and parent not in empties:
+                    empties.append(parent)
         # really remove empties
         for empty in empties:
-            context.blend_data.objects.remove(empty, do_unlink=True)
+            if not empty.children:
+                context.blend_data.objects.remove(empty, do_unlink=True)
+
+    @classmethod
+    def collection_to_parent_empty(cls, context, collection, empty_display_type='PLAIN_AXES', empty_name='Empty',
+                                   empty_location='CENTER'):
+        # convert collection to parent empty
+        if collection:
+            collection_objects = [obj for obj in collection.collection.objects if obj.type != 'EMPTY']
+            cls.parent_to_empty(
+                context=context,
+                objects=collection_objects,
+                single=True,
+                empty_display_type=empty_display_type,
+                empty_name=empty_name,
+                empty_location=empty_location
+            )
 
     @staticmethod
     def add_empty(context, name='empty', display_type='PLAIN_AXES', location=(0.0, 0.0, 0.0), collection=None):

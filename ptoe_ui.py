@@ -33,6 +33,10 @@ class PTOE_PT_panel(Panel):
         box = layout.box()
         box.label(text='Remove Parent Empty')
         box.operator('ptoe.remove_parent_empty', icon='DECORATE_LIBRARY_OVERRIDE')
+        box = layout.box()
+        box.label(text='Tools')
+        box.operator('ptoe.collection_to_parent_empty', icon='DECORATE_LINKED')
+        box.operator('ptoe.parent_empty_to_collection', icon='COLLECTION_NEW')
 
 
 def register():
