@@ -9,9 +9,6 @@ from bpy.utils import register_class, unregister_class
 from .ptoe import PtoE
 
 
-# todo convert: collection to parenting, parenting to collection
-
-
 class PTOE_OT_parent_to_empty(Operator):
     bl_idname = 'ptoe.parent_to_empty'
     bl_label = 'Parent to Empty'
@@ -64,9 +61,9 @@ class PTOE_OT_collection_to_parent_empty(Operator):
         pref_vars = context.preferences.addons[__package__].preferences
         PtoE.collection_to_parent_empty(
             context=context,
-            collection=context.view_layer.active_layer_collection,
+            collection=context.collection,
             empty_display_type=pref_vars.empty_display_type,
-            empty_name=pref_vars.empty_default_name,
+            empty_name=context.collection.name,
             empty_location=pref_vars.empty_location
         )
         return {'FINISHED'}
@@ -84,13 +81,14 @@ class PTOE_OT_parent_empty_to_collection(Operator):
 
     def execute(self, context):
         PtoE.parent_empty_to_collection(
-            collection=context.view_layer.active_layer_collection
+            context=context,
+            empty=context.active_object
         )
         return {'FINISHED'}
 
     @classmethod
     def poll(cls, context):
-        return bool(context.view_layer.active_layer_collection)
+        return bool(context.active_object and context.active_object.type == 'EMPTY' and context.active_object.children)
 
 
 def register():

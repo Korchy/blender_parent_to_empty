@@ -11,14 +11,14 @@ class PtoE:
 
     @classmethod
     def parent_to_empty(cls, context, objects: list, single=False, transfer_transforms=True,
-                        empty_display_type='PLAIN_AXES', empty_name='Empty', empty_location='CENTER', collection=None):
+                        empty_display_type='PLAIN_AXES', empty_name='Empty', empty_location='GEOMETRY', collection=None):
         # set parent to empty
         single_empty = None
         if single:
             # get collection for empty
             if not collection:
                 collection = objects[0].users_collection[0]
-            # print(empty_location)
+            # create empty
             single_empty = cls.add_empty(
                 context=context,
                 display_type=empty_display_type,
@@ -63,7 +63,7 @@ class PtoE:
             cls.move_object_to_collection(obj=obj, collection=dest_collection)
 
     @classmethod
-    def remove_parent_empty(cls, context, objects):
+    def remove_parent_empty(cls, context, objects, collection=None):
         # remove parent empty
         if not isinstance(objects, (list, tuple)):
             objects = [objects,]
@@ -71,13 +71,15 @@ class PtoE:
         empties = []
         # clear parenting
         for obj in objects:
-            # if obj.parent and obj.parent.type == 'EMPTY':
             if obj.parent:
                 parent = obj.parent
                 obj.parent = None
                 obj.matrix_local @= parent.matrix_world.inverted()
                 if parent.type == 'EMPTY' and parent not in empties:
                     empties.append(parent)
+                # link objects to collection
+                if collection:
+                    cls.move_object_to_collection(obj=obj, collection=collection)
         # really remove empties
         for empty in empties:
             if not empty.children:
@@ -85,14 +87,14 @@ class PtoE:
 
     @classmethod
     def collection_to_parent_empty(cls, context, collection, empty_display_type='PLAIN_AXES', empty_name='Empty',
-                                   empty_location='CENTER'):
+                                   empty_location='GEOMETRY'):
         # convert collection to parent empty
         if collection:
             parent_collection = cls.parent_collection(
                 context=context,
                 collection=collection
             )
-            collection_objects = [obj for obj in collection.collection.objects if obj.type != 'EMPTY']
+            collection_objects = collection.objects[:]
             if collection_objects:
                 cls.parent_to_empty(
                     context=context,
@@ -103,6 +105,24 @@ class PtoE:
                     empty_location=empty_location,
                     collection=parent_collection
                 )
+            if len(collection.objects) == 0 and len(collection.children) == 0:
+                context.blend_data.collections.remove(collection)
+
+    @classmethod
+    def parent_empty_to_collection(cls, context, empty):
+        # convert parent empty to collection
+        if empty and empty.children:
+            # create collection
+            collection = context.blend_data.collections.new(name=empty.name)
+            collection.name = empty.name
+            # link collection to empty parent collection
+            empty.users_collection[0].children.link(collection)
+            # remove parent empty for all objects
+            cls.remove_parent_empty(
+                context=context,
+                objects=empty.children,
+                collection=collection
+            )
 
     @classmethod
     def add_empty(cls, context, name='empty', display_type='PLAIN_AXES', location=(0.0, 0.0, 0.0), collection=None):
@@ -123,7 +143,7 @@ class PtoE:
     def location_co(context, obj, location):
         # get coordinates for empty location
         co = (0.0, 0.0, 0.0)    # WORLD_ORIGIN
-        if location == 'CENTER':
+        if location == 'GEOMETRY':
             # Center of selected objects geometry
             co, radius = Bounding.sphere(
                 objects=obj,
@@ -144,7 +164,7 @@ class PtoE:
     def collections(context):
         # get all scene collections
         collections = context.blend_data.collections[:]
-        collections.append(context.scene.collection)    # main scene collection
+        collections.append(context.scene.collection)    # add main scene collection
         return collections
 
     @classmethod

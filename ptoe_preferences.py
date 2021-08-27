@@ -27,12 +27,12 @@ class PTOE_preferences(AddonPreferences):
     empty_location: EnumProperty(
         name='Empty Location',
         items=[
-            ('CENTER', 'Center', 'Center', '', 0),
+            ('GEOMETRY', 'Geometry', 'Geometry', '', 0),
             ('ACTIVE', 'Active', 'Active', '', 1),
             ('CURSOR', 'Cursor', 'Cursor', '', 2),
             ('WORLD_ORIGIN', 'World Origin', 'World Origin', '', 3)
         ],
-        default='CENTER'
+        default='GEOMETRY'
     )
 
     empty_default_name: StringProperty(
