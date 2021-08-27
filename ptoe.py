@@ -10,11 +10,14 @@ from .bpy_plus.bounding import Bounding
 class PtoE:
 
     @classmethod
-    def parent_to_empty(cls, context, objects, single=False, transfer_transforms=True, empty_display_type='PLAIN_AXES',
-                        empty_name='Empty', empty_location='CENTER'):
+    def parent_to_empty(cls, context, objects: list, single=False, transfer_transforms=True,
+                        empty_display_type='PLAIN_AXES', empty_name='Empty', empty_location='CENTER', collection=None):
         # set parent to empty
         single_empty = None
         if single:
+            # get collection for empty
+            if not collection:
+                collection = objects[0].users_collection[0]
             # print(empty_location)
             single_empty = cls.add_empty(
                 context=context,
@@ -24,9 +27,11 @@ class PtoE:
                     obj=objects,
                     location=empty_location
                 ),
-                name=empty_name
+                name=empty_name,
+                collection=collection
             )
         for obj in objects:
+            dest_collection = collection if collection else obj.users_collection[0]
             empty = single_empty if single else cls.add_empty(
                 context=context,
                 display_type=empty_display_type,
@@ -36,7 +41,7 @@ class PtoE:
                     location=empty_location
                 ),
                 name=empty_name,
-                collection=obj.users_collection[0]
+                collection=dest_collection
             )
             if empty:
                 cls.remove_parent_empty(
@@ -54,6 +59,8 @@ class PtoE:
                     # only location
                     obj.parent = empty
                     obj.matrix_local @= empty.matrix_world.inverted()
+            # move object to collection
+            cls.move_object_to_collection(obj=obj, collection=dest_collection)
 
     @classmethod
     def remove_parent_empty(cls, context, objects):
@@ -81,18 +88,24 @@ class PtoE:
                                    empty_location='CENTER'):
         # convert collection to parent empty
         if collection:
-            collection_objects = [obj for obj in collection.collection.objects if obj.type != 'EMPTY']
-            cls.parent_to_empty(
+            parent_collection = cls.parent_collection(
                 context=context,
-                objects=collection_objects,
-                single=True,
-                empty_display_type=empty_display_type,
-                empty_name=empty_name,
-                empty_location=empty_location
+                collection=collection
             )
+            collection_objects = [obj for obj in collection.collection.objects if obj.type != 'EMPTY']
+            if collection_objects:
+                cls.parent_to_empty(
+                    context=context,
+                    objects=collection_objects,
+                    single=True,
+                    empty_display_type=empty_display_type,
+                    empty_name=empty_name,
+                    empty_location=empty_location,
+                    collection=parent_collection
+                )
 
-    @staticmethod
-    def add_empty(context, name='empty', display_type='PLAIN_AXES', location=(0.0, 0.0, 0.0), collection=None):
+    @classmethod
+    def add_empty(cls, context, name='empty', display_type='PLAIN_AXES', location=(0.0, 0.0, 0.0), collection=None):
         # add new empty to collection
         empty = context.blend_data.objects.new(
             name=name,
@@ -100,15 +113,15 @@ class PtoE:
         )
         empty.empty_display_type = display_type
         empty.location = location
-        collection = collection if collection else context.collection
-        collection.objects.link(
-            object=empty
+        cls.move_object_to_collection(
+            obj=empty,
+            collection=collection if collection else context.collection
         )
         return empty
 
     @staticmethod
     def location_co(context, obj, location):
-        # get coordinates by location
+        # get coordinates for empty location
         co = (0.0, 0.0, 0.0)    # WORLD_ORIGIN
         if location == 'CENTER':
             # Center of selected objects geometry
@@ -126,3 +139,31 @@ class PtoE:
             # active object
             co = context.scene.cursor.location
         return co
+
+    @staticmethod
+    def collections(context):
+        # get all scene collections
+        collections = context.blend_data.collections[:]
+        collections.append(context.scene.collection)    # main scene collection
+        return collections
+
+    @classmethod
+    def parent_collection(cls, context, collection):
+        # get collection parent collection
+        collections = cls.collections(
+            context=context
+        )
+        return next((col for col in collections if collection.name in col.children), None)
+
+    @staticmethod
+    def move_object_to_collection(obj, collection):
+        # move object to collection
+        # current object collections
+        current_collections = obj.users_collection[:]
+        # link to new collection
+        if collection not in obj.users_collection:
+            collection.objects.link(object=obj)
+        # unlink from old collections (after linking to new not to loose object from scene while moving)
+        for col in current_collections:
+            if col is not collection:
+                col.objects.unlink(obj)
