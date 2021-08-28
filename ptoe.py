@@ -149,6 +149,18 @@ class PtoE:
                 objects=obj,
                 mode='BBOX'
             )
+        elif location == 'ORIGIN':
+            # Centre of objects origins
+            if hasattr(obj, '__len__') and len(obj) > 1:
+                co, radius = Bounding.sphere(
+                    objects=obj,
+                    mode='ORIGIN'
+                )
+            else:
+                if obj.parent:
+                    co = obj.parent.location
+                else:
+                    co = obj.location
         elif location == 'ACTIVE':
             # active object
             if context.active_object.parent:

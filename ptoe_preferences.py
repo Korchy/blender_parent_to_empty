@@ -28,9 +28,10 @@ class PTOE_preferences(AddonPreferences):
         name='Empty Location',
         items=[
             ('GEOMETRY', 'Geometry', 'Geometry', '', 0),
-            ('ACTIVE', 'Active', 'Active', '', 1),
-            ('CURSOR', 'Cursor', 'Cursor', '', 2),
-            ('WORLD_ORIGIN', 'World Origin', 'World Origin', '', 3)
+            ('ORIGIN', 'Origin', 'Origin', '', 1),
+            ('ACTIVE', 'Active', 'Active Object', '', 2),
+            ('CURSOR', 'Cursor', '3D Cursor', '', 3),
+            ('WORLD_ORIGIN', 'World Origin', 'World Origin', '', 4)
         ],
         default='GEOMETRY'
     )
