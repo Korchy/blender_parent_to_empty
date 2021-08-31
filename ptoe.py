@@ -14,53 +14,56 @@ class PtoE:
                         empty_display_type='PLAIN_AXES', empty_name='Empty', empty_location='GEOMETRY', collection=None):
         # set parent to empty
         single_empty = None
-        if single:
-            # get collection for empty
-            if not collection:
-                collection = objects[0].users_collection[0]
-            # create empty
-            single_empty = cls.add_empty(
-                context=context,
-                display_type=empty_display_type,
-                location=cls.location_co(
+        # don't process empties
+        objects = [obj for obj in objects if obj.type != 'EMPTY']
+        if objects:
+            # single/own empty
+            if single:
+                # get collection for empty
+                if not collection:
+                    collection = objects[0].users_collection[0]
+                # create empty
+                single_empty = cls.add_empty(
                     context=context,
-                    obj=objects,
-                    location=empty_location
-                ),
-                name=empty_name,
-                collection=collection
-            )
-        for obj in objects:
-            dest_collection = collection if collection else obj.users_collection[0]
-            empty = single_empty if single else cls.add_empty(
-                context=context,
-                display_type=empty_display_type,
-                location=cls.location_co(
-                    context=context,
-                    obj=obj,
-                    location=empty_location
-                ),
-                name=empty_name,
-                collection=dest_collection
-            )
-            if empty:
-                cls.remove_parent_empty(
-                    context=context,
-                    objects=obj
+                    display_type=empty_display_type,
+                    location=cls.location_co(
+                        context=context,
+                        obj=objects,
+                        location=empty_location
+                    ),
+                    name=empty_name,
+                    collection=collection
                 )
-                context.view_layer.update()
-                if not single and transfer_transforms:
-                    # copy transforms to empty and clear to object
-                    empty.matrix_world = obj.matrix_world.copy()
-                    obj.matrix_world.identity()
-                    obj.parent = empty
-
-                else:
-                    # only location
-                    obj.parent = empty
-                    obj.matrix_local @= empty.matrix_world.inverted()
-            # move object to collection
-            cls.move_object_to_collection(obj=obj, collection=dest_collection)
+            for obj in objects:
+                dest_collection = collection if collection else obj.users_collection[0]
+                empty = single_empty if single else cls.add_empty(
+                    context=context,
+                    display_type=empty_display_type,
+                    location=cls.location_co(
+                        context=context,
+                        obj=obj,
+                        location=empty_location
+                    ),
+                    name=empty_name,
+                    collection=dest_collection
+                )
+                if empty:
+                    cls.remove_parent_empty(
+                        context=context,
+                        objects=obj
+                    )
+                    context.view_layer.update()
+                    if not single and transfer_transforms:
+                        # copy transforms to empty and clear to object
+                        empty.matrix_world = obj.matrix_world.copy()
+                        obj.matrix_world.identity()
+                        obj.parent = empty
+                    else:
+                        # only location
+                        obj.parent = empty
+                        obj.matrix_local @= empty.matrix_world.inverted()
+                # move object to collection
+                cls.move_object_to_collection(obj=obj, collection=dest_collection)
 
     @classmethod
     def remove_parent_empty(cls, context, objects, collection=None):
@@ -163,10 +166,11 @@ class PtoE:
                     co = obj.location
         elif location == 'ACTIVE':
             # active object
-            if context.active_object.parent:
-                co = context.active_object.parent.location
-            else:
-                co = context.active_object.location
+            if context.active_object:
+                if context.active_object.parent:
+                    co = context.active_object.parent.location
+                else:
+                    co = context.active_object.location
         elif location == 'CURSOR':
             # active object
             co = context.scene.cursor.location
