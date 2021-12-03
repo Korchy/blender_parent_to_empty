@@ -11,7 +11,8 @@ class PtoE:
 
     @classmethod
     def parent_to_empty(cls, context, objects: list, single=False, transfer_transforms=True,
-                        empty_display_type='PLAIN_AXES', empty_name='Empty', empty_location='GEOMETRY', collection=None):
+                        empty_display_type='PLAIN_AXES', empty_name='Empty', empty_location='GEOMETRY',
+                        collection=None):
         # set parent to empty
         single_empty = None
         # don't process empties
@@ -69,7 +70,7 @@ class PtoE:
     def remove_parent_empty(cls, context, objects, collection=None):
         # remove parent empty
         if not isinstance(objects, (list, tuple)):
-            objects = [objects,]
+            objects = [objects, ]
         # collect empties to future remove (maybe single empty or different empties on every objects)
         empties = []
         # clear parenting
@@ -128,6 +129,91 @@ class PtoE:
             )
 
     @classmethod
+    def track_to_empty(cls, context, objects: list, single=False, empty_display_type='PLAIN_AXES',
+                       empty_name='Empty', empty_location='GEOMETRY', collection=None):
+        # set track to empty
+        single_empty = None
+        # don't process empties
+        objects = [obj for obj in objects if obj.type != 'EMPTY']
+        if objects:
+            # single/own empty
+            if single:
+                # get collection for empty
+                if not collection:
+                    collection = objects[0].users_collection[0]
+                # create empty
+                single_empty = cls.add_empty(
+                    context=context,
+                    display_type=empty_display_type,
+                    location=cls.location_co(
+                        context=context,
+                        obj=objects,
+                        location=empty_location
+                    ),
+                    name=empty_name,
+                    collection=collection
+                )
+            for obj in objects:
+                dest_collection = collection if collection else obj.users_collection[0]
+                empty = single_empty if single else cls.add_empty(
+                    context=context,
+                    display_type=empty_display_type,
+                    location=cls.location_co(
+                        context=context,
+                        obj=obj,
+                        location=empty_location
+                    ),
+                    name=empty_name,
+                    collection=dest_collection
+                )
+                if empty:
+                    # remove old track if exists
+                    cls.remove_track_empty(
+                        context=context,
+                        objects=obj
+                    )
+                    # add new track_to
+                    cls.add_track_to_constraint(
+                        obj=obj,
+                        target=empty
+                    )
+                # move object to collection
+                cls.move_object_to_collection(obj=obj, collection=dest_collection)
+
+    @classmethod
+    def remove_track_empty(cls, context, objects):
+        # remove parent empty
+        if not isinstance(objects, (list, tuple)):
+            objects = [objects, ]
+        # collect empties to future remove (maybe single empty or different empties on every objects)
+        empties = []
+        # clear tracking
+        for obj in objects:
+            track_to_constraint = next(
+                (constraint for constraint in obj.constraints if constraint.type == 'TRACK_TO'), None
+            )
+            if track_to_constraint:
+                target = track_to_constraint.target
+                if target.type == 'EMPTY' and target not in empties:
+                    empties.append(target)
+                # save current transformations
+                mat = obj.matrix_world.copy()
+                # remove track_to constraint
+                obj.constraints.remove(track_to_constraint)
+                # set current transformation
+                obj.matrix_local = mat
+        # really remove empties
+        if empties:
+            all_track_to_targets = [
+                constraint.target for constraints in
+                (obj.constraints for obj in context.blend_data.objects if obj.constraints)
+                for constraint in constraints if constraint.type == 'TRACK_TO'
+            ]
+            for empty in empties:
+                if empty not in all_track_to_targets:
+                    context.blend_data.objects.remove(empty, do_unlink=True)
+
+    @classmethod
     def add_empty(cls, context, name='empty', display_type='PLAIN_AXES', location=(0.0, 0.0, 0.0), collection=None):
         # add new empty to collection
         empty = context.blend_data.objects.new(
@@ -150,6 +236,7 @@ class PtoE:
             # Center of selected objects geometry
             co, radius = Bounding.sphere(
                 objects=obj,
+                context=context,
                 mode='BBOX'
             )
         elif location == 'ORIGIN':
@@ -157,6 +244,7 @@ class PtoE:
             if hasattr(obj, '__len__') and len(obj) > 1:
                 co, radius = Bounding.sphere(
                     objects=obj,
+                    context=context,
                     mode='ORIGIN'
                 )
             else:
@@ -203,3 +291,10 @@ class PtoE:
         for col in current_collections:
             if col is not collection:
                 col.objects.unlink(obj)
+
+    @staticmethod
+    def add_track_to_constraint(obj, target):
+        # track object to target
+        if obj and target:
+            constraint = obj.constraints.new(type='TRACK_TO')
+            constraint.target = target

@@ -91,14 +91,59 @@ class PTOE_OT_parent_empty_to_collection(Operator):
         return bool(context.active_object and context.active_object.type == 'EMPTY' and context.active_object.children)
 
 
+class PTOE_OT_track_to_empty(Operator):
+    bl_idname = 'ptoe.track_to_empty'
+    bl_label = 'Track to Empty'
+    bl_description = 'Track to Empty'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        pref_vars = context.preferences.addons[__package__].preferences
+        PtoE.track_to_empty(
+            context=context,
+            objects=context.selected_objects,
+            single=True if pref_vars.parenting_scatter == 'SINGLE' else False,
+            empty_display_type=pref_vars.empty_display_type,
+            empty_name=pref_vars.empty_default_name,
+            empty_location=pref_vars.empty_location
+        )
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        return bool(context.selected_objects)
+
+
+class PTOE_OT_remove_track_empty(Operator):
+    bl_idname = 'ptoe.remove_track_empty'
+    bl_label = 'Remove Track Empty'
+    bl_description = 'Remove Track Empty'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        PtoE.remove_track_empty(
+            context=context,
+            objects=context.selected_objects
+        )
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        return bool(context.selected_objects)
+
+
 def register():
     register_class(PTOE_OT_parent_to_empty)
     register_class(PTOE_OT_remove_parent_empty)
     register_class(PTOE_OT_collection_to_parent_empty)
     register_class(PTOE_OT_parent_empty_to_collection)
+    register_class(PTOE_OT_track_to_empty)
+    register_class(PTOE_OT_remove_track_empty)
 
 
 def unregister():
+    unregister_class(PTOE_OT_remove_track_empty)
+    unregister_class(PTOE_OT_track_to_empty)
     unregister_class(PTOE_OT_parent_empty_to_collection)
     unregister_class(PTOE_OT_collection_to_parent_empty)
     unregister_class(PTOE_OT_remove_parent_empty)

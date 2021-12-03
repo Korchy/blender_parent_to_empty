@@ -19,11 +19,11 @@ Pressing the "Collection to Parent Empty" button converts the currently active c
 
 Current add-on version
 -
-1.0.0.
+1.1.0.
 
 Blender versions
 -
-2.93, 3.0
+2.93, 3.0, 3.1
 
 Location and call
 -
@@ -36,6 +36,10 @@ Installation
 
 Version history
 -
+
+1.1.0.
+- Added Track/Remove track to Empty
+- Added default keymaps
 
 1.0.0.
 - This release.
