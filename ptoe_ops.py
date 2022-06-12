@@ -53,7 +53,7 @@ class PTOE_OT_remove_parent_empty(Operator):
 
 class PTOE_OT_collection_to_parent_empty(Operator):
     bl_idname = 'ptoe.collection_to_parent_empty'
-    bl_label = 'Collection to Patent Empty'
+    bl_label = 'Collection to Parent Empty'
     bl_description = 'Convert active collection to Parent Empty'
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -75,7 +75,7 @@ class PTOE_OT_collection_to_parent_empty(Operator):
 
 class PTOE_OT_parent_empty_to_collection(Operator):
     bl_idname = 'ptoe.parent_empty_to_collection'
-    bl_label = 'Patent Empty to Collection'
+    bl_label = 'Parent Empty to Collection'
     bl_description = 'Convert Parent Empty to Collection'
     bl_options = {'REGISTER', 'UNDO'}
 
